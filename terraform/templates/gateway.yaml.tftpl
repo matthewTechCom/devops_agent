@@ -1,0 +1,52 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: AgentCore Gateway for CloudWatch Logs Insights MCP server
+
+Resources:
+  Gateway:
+    Type: AWS::BedrockAgentCore::Gateway
+    Properties:
+      Name: "${gateway_name}"
+      Description: "${gateway_description}"
+      AuthorizerType: NONE
+      ExceptionLevel: DEBUG
+      ProtocolType: MCP
+      ProtocolConfiguration:
+        Mcp:
+          Instructions: "${gateway_instructions}"
+          SupportedVersions:
+            - "2025-06-18"
+            - "2025-03-26"
+      RoleArn: "${gateway_role_arn}"
+
+  GatewayTarget:
+    Type: AWS::BedrockAgentCore::GatewayTarget
+    Properties:
+      GatewayIdentifier: !Ref Gateway
+      Name: "${target_name}"
+      Description: "AgentCore Runtime target for the CloudWatch Logs Insights MCP server"
+      CredentialProviderConfigurations:
+        - CredentialProviderType: OAUTH
+          CredentialProvider:
+            OauthCredentialProvider:
+              ProviderArn: "${oauth_provider_arn}"
+              GrantType: CLIENT_CREDENTIALS
+              Scopes:
+                - "${oauth_scope}"
+      TargetConfiguration:
+        Mcp:
+          McpServer:
+            Endpoint: "${runtime_mcp_invoke_url}"
+
+Outputs:
+  GatewayArn:
+    Value: !GetAtt Gateway.GatewayArn
+  GatewayIdentifier:
+    Value: !GetAtt Gateway.GatewayIdentifier
+  GatewayUrl:
+    Value: !GetAtt Gateway.GatewayUrl
+  GatewayStatus:
+    Value: !GetAtt Gateway.Status
+  GatewayTargetId:
+    Value: !GetAtt GatewayTarget.TargetId
+  GatewayTargetStatus:
+    Value: !GetAtt GatewayTarget.Status

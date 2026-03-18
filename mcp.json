@@ -1,0 +1,8 @@
+{
+  "servers": {
+    "agentcoreCloudWatch": {
+      "type": "http",
+      "url": "https://REPLACE_WITH_GATEWAY_URL"
+    }
+  }
+}

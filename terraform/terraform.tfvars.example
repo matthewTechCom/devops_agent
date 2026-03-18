@@ -1,0 +1,21 @@
+aws_region   = "ap-northeast-1"
+project_name = "devops-agent"
+environment  = "prod"
+
+python_executable = "../.venv/bin/python"
+
+runtime_image_tag = "latest"
+
+target_app_name        = "todo-sample"
+target_app_environment = "prod"
+target_app_component   = "backend"
+
+# default_log_group_name = "/ecs/todo-sample-prod-backend"
+# allowed_log_group_names = [
+#   "/ecs/todo-sample-prod-backend",
+#   "/ecs/another-app-prod-backend",
+# ]
+
+common_tags = {
+  Owner = "platform-team"
+}

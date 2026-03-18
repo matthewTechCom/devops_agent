@@ -1,0 +1,45 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: AgentCore Runtime for CloudWatch Logs Insights MCP server
+
+Resources:
+  Runtime:
+    Type: AWS::BedrockAgentCore::Runtime
+    Properties:
+      AgentRuntimeName: "${runtime_name}"
+      Description: "${runtime_description}"
+      AgentRuntimeArtifact:
+        ContainerConfiguration:
+          ContainerUri: "${runtime_image_uri}"
+      NetworkConfiguration:
+        NetworkMode: PUBLIC
+      ProtocolConfiguration: MCP
+      AuthorizerConfiguration:
+        CustomJWTAuthorizer:
+          DiscoveryUrl: "${runtime_discovery_url}"
+          AllowedClients:
+            - "${runtime_allowed_client}"
+          AllowedScopes:
+            - "${runtime_allowed_scope}"
+      LifecycleConfiguration:
+        IdleRuntimeSessionTimeout: ${runtime_idle_timeout_seconds}
+        MaxLifetime: ${runtime_max_lifetime_seconds}
+      EnvironmentVariables:
+        AWS_REGION: "${aws_region}"
+        HOST: 0.0.0.0
+        PORT: "8000"
+        QUERY_TIMEOUT_SECONDS: "${query_timeout_seconds}"
+        QUERY_POLL_SECONDS: "${query_poll_seconds}"
+        TARGET_APP_NAME: "${target_app_name}"
+        TARGET_APP_ENV: "${target_app_environment}"
+        TARGET_APP_COMPONENT: "${target_app_component}"
+        DEFAULT_LOG_GROUP_NAME: "${default_log_group_name}"
+        ALLOWED_LOG_GROUP_NAMES: "${allowed_log_group_names}"
+      RoleArn: "${runtime_role_arn}"
+
+Outputs:
+  RuntimeArn:
+    Value: !GetAtt Runtime.AgentRuntimeArn
+  RuntimeId:
+    Value: !GetAtt Runtime.AgentRuntimeId
+  RuntimeStatus:
+    Value: !GetAtt Runtime.Status

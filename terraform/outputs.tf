@@ -1,0 +1,94 @@
+output "ecr_repository_url" {
+  description = "ECR repository URL for the MCP runtime image."
+  value       = aws_ecr_repository.runtime.repository_url
+}
+
+output "runtime_name" {
+  description = "AgentCore Runtime name."
+  value       = local.runtime_name
+}
+
+output "runtime_role_arn" {
+  description = "IAM role ARN assumed by AgentCore Runtime."
+  value       = aws_iam_role.runtime.arn
+}
+
+output "runtime_arn" {
+  description = "AgentCore Runtime ARN."
+  value       = aws_cloudformation_stack.runtime.outputs["RuntimeArn"]
+}
+
+output "runtime_status" {
+  description = "Current AgentCore Runtime status."
+  value       = aws_cloudformation_stack.runtime.outputs["RuntimeStatus"]
+}
+
+output "runtime_mcp_invoke_url" {
+  description = "MCP endpoint exposed by AgentCore Runtime and used as the Gateway target."
+  value       = local.runtime_mcp_invoke_url
+}
+
+output "agentcore_oauth_provider_arn" {
+  description = "AgentCore Identity OAuth credential provider ARN used by the Gateway target."
+  value       = data.external.agentcore_oauth_provider.result["credential_provider_arn"]
+}
+
+output "default_log_group_name" {
+  description = "Default target application log group configured for this runtime."
+  value       = local.effective_default_log_group_name
+}
+
+output "allowed_log_group_names" {
+  description = "All log groups this runtime may query."
+  value       = local.effective_allowed_log_group_names
+}
+
+output "gateway_role_arn" {
+  description = "IAM role ARN assumed by AgentCore Gateway."
+  value       = aws_iam_role.gateway.arn
+}
+
+output "gateway_identifier" {
+  description = "Gateway identifier."
+  value       = aws_cloudformation_stack.gateway.outputs["GatewayIdentifier"]
+}
+
+output "gateway_url" {
+  description = "Public AgentCore Gateway MCP endpoint URL."
+  value       = aws_cloudformation_stack.gateway.outputs["GatewayUrl"]
+}
+
+output "gateway_status" {
+  description = "Current AgentCore Gateway status."
+  value       = aws_cloudformation_stack.gateway.outputs["GatewayStatus"]
+}
+
+output "gateway_target_id" {
+  description = "Gateway target ID."
+  value       = aws_cloudformation_stack.gateway.outputs["GatewayTargetId"]
+}
+
+output "gateway_target_status" {
+  description = "Gateway target status after synchronization."
+  value       = aws_cloudformation_stack.gateway.outputs["GatewayTargetStatus"]
+}
+
+output "cognito_user_pool_id" {
+  description = "Cognito user pool ID used for Runtime inbound JWT validation."
+  value       = aws_cognito_user_pool.runtime.id
+}
+
+output "cognito_user_pool_domain" {
+  description = "Cognito hosted UI domain prefix."
+  value       = aws_cognito_user_pool_domain.runtime.domain
+}
+
+output "cognito_gateway_client_id" {
+  description = "Cognito app client ID used by AgentCore Gateway for client credentials."
+  value       = aws_cognito_user_pool_client.gateway_runtime.id
+}
+
+output "cognito_runtime_scope" {
+  description = "OAuth scope used by AgentCore Gateway to invoke the Runtime."
+  value       = local.cognito_scope_value
+}
