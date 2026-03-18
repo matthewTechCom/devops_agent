@@ -16,7 +16,7 @@ locals {
   derived_default_log_group_name = (
     var.target_app_name != null && var.target_app_environment != null
   ) ? "/ecs/${var.target_app_name}-${var.target_app_environment}-${var.target_app_component}" : null
-  effective_default_log_group_name = coalesce(var.default_log_group_name, local.derived_default_log_group_name)
+  effective_default_log_group_name = var.default_log_group_name != null ? var.default_log_group_name : local.derived_default_log_group_name
   effective_allowed_log_group_names = var.allowed_log_group_names != null ? var.allowed_log_group_names : (
     local.effective_default_log_group_name != null ? [local.effective_default_log_group_name] : []
   )

@@ -8,6 +8,18 @@ data "aws_iam_policy_document" "agentcore_assume_role" {
       type        = "Service"
       identifiers = ["bedrock-agentcore.amazonaws.com"]
     }
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:SourceAccount"
+      values   = [local.account_id]
+    }
+
+    condition {
+      test     = "ArnLike"
+      variable = "aws:SourceArn"
+      values   = ["arn:${local.partition}:bedrock-agentcore:${var.aws_region}:${local.account_id}:*"]
+    }
   }
 }
 
