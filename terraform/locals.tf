@@ -42,8 +42,16 @@ locals {
   cognito_domain_prefix = trimsuffix(substr(replace("${local.base_name}-auth", "/[^0-9a-z-]/", "-"), 0, 63), "-")
   oauth_provider_name   = trimsuffix(substr(replace("${local.base_name}-cognito", "/[^0-9A-Za-z_-]/", "-"), 0, 128), "-")
 
-  runtime_repository_name = trimsuffix(substr("${local.base_name}-runtime", 0, 256), "-")
-  runtime_image_uri       = "${aws_ecr_repository.runtime.repository_url}:${var.runtime_image_tag}"
+  runtime_repository_name    = trimsuffix(substr("${local.base_name}-runtime", 0, 256), "-")
+  runtime_image_uri          = "${aws_ecr_repository.runtime.repository_url}:${var.runtime_image_tag}"
+  runtime_config_secret_name = trimsuffix(substr("${local.base_name}-runtime-config", 0, 512), "-")
+  runtime_config_secret_payload = {
+    TARGET_APP_NAME         = var.target_app_name != null ? var.target_app_name : ""
+    TARGET_APP_ENV          = var.target_app_environment != null ? var.target_app_environment : ""
+    TARGET_APP_COMPONENT    = var.target_app_component
+    DEFAULT_LOG_GROUP_NAME  = local.effective_default_log_group_name != null ? local.effective_default_log_group_name : ""
+    ALLOWED_LOG_GROUP_NAMES = local.effective_allowed_log_group_names_csv
+  }
 
   runtime_log_group_arn          = "arn:${local.partition}:logs:${var.aws_region}:${local.account_id}:log-group:/aws/bedrock-agentcore/runtimes/*"
   runtime_log_stream_arn         = "arn:${local.partition}:logs:${var.aws_region}:${local.account_id}:log-group:/aws/bedrock-agentcore/runtimes/*:log-stream:*"

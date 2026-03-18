@@ -13,10 +13,12 @@ flowchart LR
   Cognito["Amazon Cognito"]
   OAuthProvider["AgentCore Identity\nOAuth Provider"]
   ECR["Amazon ECR"]
+  Secrets["AWS Secrets Manager\nruntime config"]
 
   Client -->|MCP over HTTP| Gateway
   Gateway -->|MCP Target| Runtime
   Runtime -->|StartQuery / GetQueryResults| CloudWatch
+  Runtime -. 起動時に設定取得 .-> Secrets
   Runtime -. JWT 検証 .-> Cognito
   Gateway -. client_credentials .-> OAuthProvider
   OAuthProvider -. endpoint / secret .-> Cognito
@@ -28,6 +30,7 @@ flowchart LR
 ```text
 .
 ├── .env.example
+├── .dockerignore
 ├── Dockerfile
 ├── README.md
 ├── docs/
@@ -46,8 +49,10 @@ flowchart LR
     ├── locals.tf
     ├── outputs.tf
     ├── providers.tf
+    ├── runtime_config.tf
     ├── scripts/
-    │   └── manage_oauth_provider.py
+    │   ├── manage_oauth_provider.py
+    │   └── manage_runtime_config_secret.py
     ├── templates/
     │   ├── gateway.yaml.tftpl
     │   └── runtime.yaml.tftpl
@@ -64,11 +69,14 @@ flowchart LR
 - `mcp_server.py`
   - MCP サーバー本体です。
   - `query_cloudwatch_insights` ツールを公開します。
-  - `.env` を読み込み、対象 log group の制御、CloudWatch Logs Insights の実行、結果整形、`/healthz` を提供します。
+  - ローカルでは `.env` を読み込み、AWS 上では `RUNTIME_CONFIG_SECRET_ID` または `RUNTIME_CONFIG_SSM_PARAMETER_NAME` を使って設定をロードします。
+  - 対象 log group の制御、CloudWatch Logs Insights の実行、結果整形、`/healthz` を提供します。
 - `requirements.txt`
   - `boto3`, `mcp`, `starlette`, `uvicorn`, `python-dotenv` など実行依存を定義します。
 - `Dockerfile`
   - `mcp_server.py` を AgentCore Runtime へ載せるためのコンテナイメージ定義です。
+- `.dockerignore`
+  - `.env` や Terraform state などを Docker build context から除外します。
 - `mcp.json`
   - AgentCore Gateway URL を指す MCP クライアント設定のサンプルです。
 
@@ -92,6 +100,8 @@ flowchart LR
   - デプロイ時に切り替えるパラメータを定義します。
 - `terraform/outputs.tf`
   - Gateway URL、Runtime ARN、Cognito 情報などの参照値を出力します。
+- `terraform/runtime_config.tf`
+  - AgentCore Runtime が起動時に読む runtime config 用の Secrets Manager secret を作成し、補助スクリプトで値を投入します。
 - `terraform/providers.tf`, `terraform/versions.tf`
   - Terraform / Provider のバージョン制約と AWS provider 設定です。
 
@@ -99,6 +109,8 @@ flowchart LR
 
 - `terraform/scripts/manage_oauth_provider.py`
   - Bedrock AgentCore Control API を呼び、OAuth Provider の作成・更新・取得・削除を行います。
+- `terraform/scripts/manage_runtime_config_secret.py`
+  - Runtime 用 Secrets Manager secret の値を Terraform apply 時に更新します。
 - `terraform/templates/runtime.yaml.tftpl`
   - AgentCore Runtime リソースの CloudFormation テンプレートです。
 - `terraform/templates/gateway.yaml.tftpl`
@@ -122,6 +134,7 @@ flowchart TB
     ECRTF["ecr.tf"]
     COG["cognito.tf"]
     IDTF["agentcore_identity.tf"]
+    RCONF["runtime_config.tf"]
     RUNTIME["agentcore_runtime.tf"]
     GATEWAY["gateway.tf"]
     OUT["outputs.tf"]
@@ -133,7 +146,8 @@ flowchart TB
   end
 
   subgraph Scripts["Helper Script"]
-    SCRIPT["scripts/manage_oauth_provider.py"]
+    OAUTHSCRIPT["scripts/manage_oauth_provider.py"]
+    SECRETSCRIPT["scripts/manage_runtime_config_secret.py"]
   end
 
   REQ --> DOCKER
@@ -141,13 +155,17 @@ flowchart TB
   VAR --> LOCALS
   LOCALS --> IAM
   LOCALS --> COG
+  LOCALS --> RCONF
   LOCALS --> RUNTIME
   LOCALS --> GATEWAY
   ECRTF --> RUNTIME
+  RCONF --> IAM
+  RCONF --> RUNTIME
+  RCONF --> SECRETSCRIPT
   IAM --> RUNTIME
   COG --> RUNTIME
   COG --> IDTF
-  IDTF --> SCRIPT
+  IDTF --> OAUTHSCRIPT
   RUNTIME --> RTPL
   GATEWAY --> GTPL
   IDTF --> GATEWAY
@@ -164,9 +182,11 @@ flowchart TB
    - 実際に公開している MCP ツールと入出力、制約を確認します。
 3. `terraform/locals.tf` と `terraform/variables.tf`
    - 命名規則、切替パラメータ、対象 log group の決まり方を確認します。
-4. `terraform/cognito.tf` `terraform/agentcore_identity.tf` `terraform/iam.tf`
+4. `terraform/runtime_config.tf` と `terraform/scripts/manage_runtime_config_secret.py`
+   - Runtime が読む設定がどこに保存され、どう投入されるかを確認します。
+5. `terraform/cognito.tf` `terraform/agentcore_identity.tf` `terraform/iam.tf`
    - 認証と権限の前提を確認します。
-5. `terraform/agentcore_runtime.tf` `terraform/gateway.tf`
+6. `terraform/agentcore_runtime.tf` `terraform/gateway.tf`
    - Runtime / Gateway のデプロイ形態を確認します。
 
 ## このリポジトリで重要な設計ポイント
@@ -175,4 +195,6 @@ flowchart TB
 - AWS 上の実体作成は Terraform が担いますが、AgentCore Runtime / Gateway 自体は CloudFormation テンプレート経由で作成されます。
 - Gateway から Runtime への接続は Cognito + AgentCore Identity OAuth Provider を介した `client_credentials` フローです。
 - CloudWatch Logs Insights の実行権限は Runtime IAM Role のみにあり、Gateway 自身は CloudWatch を直接触りません。
-- 対象 log group は `.env` と Terraform 変数の両方で制御され、アプリ側と IAM 側の二重ガードになっています。
+- `.env` はローカル実行用で、Docker build context にも Runtime 環境変数にもそのまま載りません。
+- AWS 上の Runtime は `RUNTIME_CONFIG_SECRET_ID` を受け取り、Secrets Manager から runtime config を起動時に読み込みます。
+- 対象 log group は runtime config と IAM Policy の両方で制御され、アプリ側と権限側の二重ガードになっています。

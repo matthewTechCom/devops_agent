@@ -38,6 +38,11 @@ output "default_log_group_name" {
   value       = local.effective_default_log_group_name
 }
 
+output "runtime_config_secret_arn" {
+  description = "Secrets Manager ARN that stores runtime configuration loaded by the MCP server."
+  value       = aws_secretsmanager_secret.runtime_config.arn
+}
+
 output "allowed_log_group_names" {
   description = "All log groups this runtime may query."
   value       = local.effective_allowed_log_group_names

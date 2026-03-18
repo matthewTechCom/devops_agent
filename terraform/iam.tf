@@ -88,6 +88,15 @@ data "aws_iam_policy_document" "runtime" {
     ]
     resources = local.allowed_log_group_arns
   }
+
+  statement {
+    sid    = "ReadRuntimeConfigSecret"
+    effect = "Allow"
+    actions = [
+      "secretsmanager:GetSecretValue",
+    ]
+    resources = [aws_secretsmanager_secret.runtime_config.arn]
+  }
 }
 
 resource "terraform_data" "validate_target_app" {

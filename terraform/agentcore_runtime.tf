@@ -12,11 +12,7 @@ resource "aws_cloudformation_stack" "runtime" {
     query_poll_seconds           = tostring(var.query_poll_seconds)
     runtime_idle_timeout_seconds = tostring(var.runtime_idle_timeout_seconds)
     runtime_max_lifetime_seconds = tostring(var.runtime_max_lifetime_seconds)
-    target_app_name              = coalesce(var.target_app_name, "")
-    target_app_environment       = coalesce(var.target_app_environment, "")
-    target_app_component         = var.target_app_component
-    default_log_group_name       = coalesce(local.effective_default_log_group_name, "")
-    allowed_log_group_names      = local.effective_allowed_log_group_names_csv
+    runtime_config_secret_id     = aws_secretsmanager_secret.runtime_config.arn
     runtime_discovery_url        = local.cognito_discovery_url
     runtime_allowed_client       = aws_cognito_user_pool_client.gateway_runtime.id
     runtime_allowed_scope        = local.cognito_scope_value
@@ -25,5 +21,6 @@ resource "aws_cloudformation_stack" "runtime" {
   depends_on = [
     aws_iam_role_policy.runtime,
     aws_cognito_user_pool_domain.runtime,
+    terraform_data.runtime_config_secret_value,
   ]
 }

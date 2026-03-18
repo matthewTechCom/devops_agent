@@ -1,3 +1,4 @@
+import json
 import os
 import time
 from datetime import datetime, timedelta, timezone
@@ -14,7 +15,86 @@ import uvicorn
 
 load_dotenv()
 
-AWS_REGION = os.getenv("AWS_REGION", "ap-northeast-1")
+
+def bootstrap_aws_region() -> str:
+    return os.getenv("AWS_REGION", "ap-northeast-1")
+
+
+def parse_remote_runtime_config(raw_payload: str, *, source: str) -> dict[str, Any]:
+    try:
+        payload = json.loads(raw_payload)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"{source} must contain a valid JSON object.") from exc
+
+    if not isinstance(payload, dict):
+        raise RuntimeError(f"{source} must contain a JSON object at the top level.")
+
+    return payload
+
+
+def apply_remote_runtime_config(payload: dict[str, Any]) -> None:
+    for key, value in payload.items():
+        if value is None:
+            continue
+
+        if isinstance(value, bool):
+            normalized = "true" if value else "false"
+        elif isinstance(value, (str, int, float)):
+            normalized = str(value)
+        elif isinstance(value, list):
+            normalized = ",".join(str(item) for item in value)
+        else:
+            raise RuntimeError(
+                f"Unsupported value type for runtime config key '{key}': {type(value).__name__}."
+            )
+
+        os.environ[key] = normalized
+
+
+def load_runtime_config_from_secrets_manager(secret_id: str) -> None:
+    client = boto3.client("secretsmanager", region_name=bootstrap_aws_region())
+    response = client.get_secret_value(SecretId=secret_id)
+    secret_string = response.get("SecretString")
+    if not secret_string:
+        raise RuntimeError("Secrets Manager runtime config must be stored as SecretString.")
+
+    apply_remote_runtime_config(
+        parse_remote_runtime_config(secret_string, source=f"Secrets Manager secret '{secret_id}'")
+    )
+
+
+def load_runtime_config_from_ssm(parameter_name: str) -> None:
+    client = boto3.client("ssm", region_name=bootstrap_aws_region())
+    response = client.get_parameter(Name=parameter_name, WithDecryption=True)
+    parameter_value = response["Parameter"]["Value"]
+
+    apply_remote_runtime_config(
+        parse_remote_runtime_config(parameter_value, source=f"SSM parameter '{parameter_name}'")
+    )
+
+
+def bootstrap_runtime_config() -> str:
+    secret_id = os.getenv("RUNTIME_CONFIG_SECRET_ID", "").strip()
+    parameter_name = os.getenv("RUNTIME_CONFIG_SSM_PARAMETER_NAME", "").strip()
+
+    if secret_id and parameter_name:
+        raise RuntimeError(
+            "Configure only one of RUNTIME_CONFIG_SECRET_ID or RUNTIME_CONFIG_SSM_PARAMETER_NAME."
+        )
+
+    if secret_id:
+        load_runtime_config_from_secrets_manager(secret_id)
+        return "secretsmanager"
+
+    if parameter_name:
+        load_runtime_config_from_ssm(parameter_name)
+        return "ssm"
+
+    return "environment"
+
+
+RUNTIME_CONFIG_SOURCE = bootstrap_runtime_config()
+AWS_REGION = bootstrap_aws_region()
 HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", "8000"))
 QUERY_TIMEOUT_SECONDS = int(os.getenv("QUERY_TIMEOUT_SECONDS", "45"))
@@ -116,6 +196,7 @@ async def healthz(_request) -> JSONResponse:
             "region": AWS_REGION,
             "default_log_group_name": inferred_default_log_group_name(),
             "allowed_log_group_names": effective_allowed_log_group_names(),
+            "runtime_config_source": RUNTIME_CONFIG_SOURCE,
             "target_app": {
                 "name": TARGET_APP_NAME or None,
                 "environment": TARGET_APP_ENV or None,
@@ -218,6 +299,7 @@ def query_cloudwatch_insights(log_group_name: str, minutes: int, query: str) -> 
                 "status": status,
                 "results": normalize_results(result_response.get("results", [])),
                 "statistics": result_response.get("statistics", {}),
+                "runtime_config_source": RUNTIME_CONFIG_SOURCE,
                 "queried_at": end_time.isoformat(),
                 "target_app": {
                     "name": TARGET_APP_NAME or None,
