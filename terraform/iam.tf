@@ -189,9 +189,9 @@ data "aws_iam_policy_document" "gateway_invoke" {
     actions = [
       "bedrock-agentcore:InvokeGateway",
     ]
-    resources = [
-      aws_cloudformation_stack.gateway.outputs["GatewayArn"],
-    ]
+    resources = compact([
+      try(aws_cloudformation_stack.gateway.outputs["GatewayArn"], null),
+    ])
   }
 }
 
