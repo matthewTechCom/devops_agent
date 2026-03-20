@@ -136,3 +136,32 @@ output "rds_lambda_security_group_id" {
   description = "Security group ID of the RDS Lambda proxy (add ingress to RDS SG)."
   value       = aws_security_group.rds_lambda.id
 }
+
+# ------------------------------------------------------------------
+# GitHub Actions MCP Server outputs
+# ------------------------------------------------------------------
+
+output "gha_ecr_repository_url" {
+  description = "ECR repository URL for the GitHub Actions MCP runtime image."
+  value       = aws_ecr_repository.gha_runtime.repository_url
+}
+
+output "gha_runtime_arn" {
+  description = "AgentCore Runtime ARN for the GitHub Actions MCP server."
+  value       = aws_cloudformation_stack.gha_runtime.outputs["RuntimeArn"]
+}
+
+output "gha_runtime_status" {
+  description = "Current AgentCore Runtime status for the GitHub Actions MCP server."
+  value       = aws_cloudformation_stack.gha_runtime.outputs["RuntimeStatus"]
+}
+
+output "gha_gateway_target_id" {
+  description = "Gateway target ID for the GitHub Actions MCP server."
+  value       = aws_cloudformation_stack.gha_gateway_target.outputs["GatewayTargetId"]
+}
+
+output "gha_gateway_target_status" {
+  description = "Gateway target status for the GitHub Actions MCP server."
+  value       = aws_cloudformation_stack.gha_gateway_target.outputs["GatewayTargetStatus"]
+}

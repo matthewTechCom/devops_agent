@@ -1,0 +1,43 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: AgentCore Runtime for GitHub Actions MCP server
+
+Resources:
+  Runtime:
+    Type: AWS::BedrockAgentCore::Runtime
+    Properties:
+      AgentRuntimeName: "${runtime_name}"
+      Description: "${runtime_description}"
+      AgentRuntimeArtifact:
+        ContainerConfiguration:
+          ContainerUri: "${runtime_image_uri}"
+      NetworkConfiguration:
+        NetworkMode: PUBLIC
+      ProtocolConfiguration: MCP
+      AuthorizerConfiguration:
+        CustomJWTAuthorizer:
+          DiscoveryUrl: "${runtime_discovery_url}"
+          AllowedClients:
+            - "${runtime_allowed_client}"
+          AllowedScopes:
+            - "${runtime_allowed_scope}"
+      LifecycleConfiguration:
+        IdleRuntimeSessionTimeout: ${runtime_idle_timeout_seconds}
+        MaxLifetime: ${runtime_max_lifetime_seconds}
+      EnvironmentVariables:
+        AWS_REGION: "${aws_region}"
+        HOST: 0.0.0.0
+        PORT: "8000"
+        GITHUB_PAT_SECRET_ID: "${github_pat_secret_id}"
+        GITHUB_REPOSITORY: "${github_repository}"
+        ALLOWED_REPOSITORIES: "${allowed_repositories}"
+        LOG_TAIL_MAX_LINES: "${log_tail_max_lines}"
+        RUNTIME_CONFIG_SECRET_ID: "${runtime_config_secret_id}"
+      RoleArn: "${runtime_role_arn}"
+
+Outputs:
+  RuntimeArn:
+    Value: !GetAtt Runtime.AgentRuntimeArn
+  RuntimeId:
+    Value: !GetAtt Runtime.AgentRuntimeId
+  RuntimeStatus:
+    Value: !GetAtt Runtime.Status
