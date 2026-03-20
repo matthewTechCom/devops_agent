@@ -157,3 +157,31 @@ variable "rds_max_rows" {
   type        = number
   default     = 1000
 }
+
+# ------------------------------------------------------------------
+# GitHub Actions MCP Server variables
+# ------------------------------------------------------------------
+
+variable "gha_runtime_image_tag" {
+  description = "Container image tag for the GitHub Actions MCP Server runtime."
+  type        = string
+  default     = "latest"
+}
+
+variable "github_pat_secret_arn" {
+  description = "Secrets Manager ARN containing the GitHub Personal Access Token."
+  type        = string
+  default     = ""
+}
+
+variable "github_repository" {
+  description = "Default GitHub repository in owner/repo format."
+  type        = string
+  default     = ""
+}
+
+variable "gha_allowed_repositories" {
+  description = "List of allowed GitHub repositories. If null, defaults to github_repository only."
+  type        = list(string)
+  default     = null
+}

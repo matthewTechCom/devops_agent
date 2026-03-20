@@ -56,7 +56,8 @@ def cmd_upsert(args: argparse.Namespace) -> int:
     if existing is None:
         result = c.create_oauth2_credential_provider(**payload)
     else:
-        result = c.update_oauth2_credential_provider(**payload)
+        c.update_oauth2_credential_provider(**payload)
+        result = c.get_oauth2_credential_provider(name=args.name)
 
     print(
         json.dumps(

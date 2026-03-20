@@ -37,3 +37,11 @@ rds_db_security_group_id = "sg-0d4248461176c6dda"
 
 # VPC endpoints security group (Lambda needs ingress on port 443 for Secrets Manager)
 rds_vpce_security_group_id = "sg-00f4fbda6538638a7"
+
+# ------------------------------------------------------------------
+# GitHub Actions MCP Server
+# ------------------------------------------------------------------
+
+gha_runtime_image_tag = "latest"
+github_pat_secret_arn = "arn:aws:secretsmanager:us-east-1:692185846024:secret:devops-agent-github-pat-r8cWBS"
+github_repository     = "matthewTechCom/todo_sample"

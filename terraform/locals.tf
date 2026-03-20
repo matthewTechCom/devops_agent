@@ -94,6 +94,33 @@ locals {
   rds_gateway_target_stack_name = trimsuffix(substr("${local.base_name}-rds-gw-target-stack", 0, 128), "-")
   rds_runtime_mcp_invoke_url    = "https://bedrock-agentcore.${var.aws_region}.amazonaws.com/runtimes/${urlencode(aws_cloudformation_stack.rds_runtime.outputs["RuntimeArn"])}/invocations?qualifier=DEFAULT"
 
+  # ------------------------------------------------------------------
+  # GitHub Actions MCP Server locals
+  # ------------------------------------------------------------------
+  gha_target_name           = "ghactions"
+  gha_runtime_name = trimsuffix(
+    substr(
+      "GhActions_${replace(lower("${var.project_name}_${var.environment}_${random_string.suffix.result}"), "/[^0-9a-z_]/", "_")}",
+      0,
+      48,
+    ),
+    "_",
+  )
+  gha_runtime_repository_name    = trimsuffix(substr("${local.base_name}-gha-runtime", 0, 256), "-")
+  gha_runtime_image_uri          = "${aws_ecr_repository.gha_runtime.repository_url}:${var.gha_runtime_image_tag}"
+  gha_runtime_config_secret_name = trimsuffix(substr("${local.base_name}-gha-runtime-config", 0, 512), "-")
+  gha_runtime_config_secret_payload = {
+    GITHUB_REPOSITORY    = var.github_repository
+    ALLOWED_REPOSITORIES = join(",", local.gha_effective_allowed_repositories)
+  }
+  gha_effective_allowed_repositories = var.gha_allowed_repositories != null ? var.gha_allowed_repositories : (
+    var.github_repository != "" ? [var.github_repository] : []
+  )
+  gha_runtime_stack_name         = trimsuffix(substr("${local.base_name}-gha-runtime-stack", 0, 128), "-")
+  gha_runtime_stack_description  = "AgentCore Runtime for GitHub Actions MCP server."
+  gha_gateway_target_stack_name  = trimsuffix(substr("${local.base_name}-gha-gw-target-stack", 0, 128), "-")
+  gha_runtime_mcp_invoke_url     = "https://bedrock-agentcore.${var.aws_region}.amazonaws.com/runtimes/${urlencode(aws_cloudformation_stack.gha_runtime.outputs["RuntimeArn"])}/invocations?qualifier=DEFAULT"
+
   tags = merge(var.common_tags, {
     Project     = var.project_name
     Environment = var.environment
