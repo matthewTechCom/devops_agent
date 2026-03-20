@@ -108,8 +108,8 @@ data "aws_iam_policy_document" "orchestrator_runtime" {
       "bedrock:InvokeModelWithResponseStream",
     ]
     resources = [
-      "arn:${local.partition}:bedrock:${var.aws_region}::foundation-model/${var.orchestrator_bedrock_model_id}",
-      "arn:${local.partition}:bedrock:${var.aws_region}::foundation-model/anthropic.*",
+      "arn:${local.partition}:bedrock:*::foundation-model/anthropic.*",
+      "arn:${local.partition}:bedrock:*:${local.account_id}:inference-profile/us.anthropic.*",
     ]
   }
 
@@ -173,7 +173,7 @@ resource "aws_cloudformation_stack" "orchestrator_runtime" {
     runtime_image_uri            = local.orchestrator_runtime_image_uri
     aws_region                   = var.aws_region
     bedrock_model_id             = var.orchestrator_bedrock_model_id
-    gateway_mcp_url              = "${aws_cloudformation_stack.gateway.outputs["GatewayUrl"]}/mcp"
+    gateway_mcp_url              = aws_cloudformation_stack.gateway.outputs["GatewayUrl"]
     max_react_steps              = tostring(var.orchestrator_max_react_steps)
     bedrock_max_tokens           = tostring(var.orchestrator_bedrock_max_tokens)
     runtime_idle_timeout_seconds = tostring(var.runtime_idle_timeout_seconds)

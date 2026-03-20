@@ -45,3 +45,12 @@ rds_vpce_security_group_id = "sg-00f4fbda6538638a7"
 gha_runtime_image_tag = "latest"
 github_pat_secret_arn = "arn:aws:secretsmanager:us-east-1:692185846024:secret:devops-agent-github-pat-r8cWBS"
 github_repository     = "matthewTechCom/todo_sample"
+
+# ------------------------------------------------------------------
+# Orchestrator MCP Server
+# ------------------------------------------------------------------
+
+orchestrator_runtime_image_tag  = "latest"
+orchestrator_bedrock_model_id   = "us.anthropic.claude-sonnet-4-20250514-v1:0"
+orchestrator_max_react_steps    = 20
+orchestrator_bedrock_max_tokens = 4096
