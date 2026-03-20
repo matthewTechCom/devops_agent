@@ -185,3 +185,31 @@ variable "gha_allowed_repositories" {
   type        = list(string)
   default     = null
 }
+
+# ------------------------------------------------------------------
+# Orchestrator MCP Server variables
+# ------------------------------------------------------------------
+
+variable "orchestrator_runtime_image_tag" {
+  description = "Container image tag for the Orchestrator MCP Server runtime."
+  type        = string
+  default     = "latest"
+}
+
+variable "orchestrator_bedrock_model_id" {
+  description = "Bedrock model ID used by the orchestrator for reasoning."
+  type        = string
+  default     = "us.anthropic.claude-sonnet-4-20250514-v1:0"
+}
+
+variable "orchestrator_max_react_steps" {
+  description = "Maximum ReAct loop iterations for the orchestrator."
+  type        = number
+  default     = 10
+}
+
+variable "orchestrator_bedrock_max_tokens" {
+  description = "Maximum tokens for Bedrock model responses."
+  type        = number
+  default     = 4096
+}

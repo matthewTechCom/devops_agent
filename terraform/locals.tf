@@ -121,6 +121,31 @@ locals {
   gha_gateway_target_stack_name  = trimsuffix(substr("${local.base_name}-gha-gw-target-stack", 0, 128), "-")
   gha_runtime_mcp_invoke_url     = "https://bedrock-agentcore.${var.aws_region}.amazonaws.com/runtimes/${urlencode(aws_cloudformation_stack.gha_runtime.outputs["RuntimeArn"])}/invocations?qualifier=DEFAULT"
 
+  # ------------------------------------------------------------------
+  # Orchestrator MCP Server locals
+  # ------------------------------------------------------------------
+  orchestrator_target_name           = "orchestrator"
+  orchestrator_runtime_name = trimsuffix(
+    substr(
+      "Orchestr_${replace(lower("${var.project_name}_${var.environment}_${random_string.suffix.result}"), "/[^0-9a-z_]/", "_")}",
+      0,
+      48,
+    ),
+    "_",
+  )
+  orchestrator_runtime_repository_name    = trimsuffix(substr("${local.base_name}-orch-runtime", 0, 256), "-")
+  orchestrator_runtime_image_uri          = "${aws_ecr_repository.orchestrator_runtime.repository_url}:${var.orchestrator_runtime_image_tag}"
+  orchestrator_runtime_config_secret_name = trimsuffix(substr("${local.base_name}-orch-runtime-config", 0, 512), "-")
+  orchestrator_runtime_config_secret_payload = {
+    BEDROCK_MODEL_ID   = var.orchestrator_bedrock_model_id
+    MAX_REACT_STEPS    = tostring(var.orchestrator_max_react_steps)
+    BEDROCK_MAX_TOKENS = tostring(var.orchestrator_bedrock_max_tokens)
+  }
+  orchestrator_runtime_stack_name         = trimsuffix(substr("${local.base_name}-orch-runtime-stack", 0, 128), "-")
+  orchestrator_runtime_stack_description  = "AgentCore Runtime for Orchestrator MCP server."
+  orchestrator_gateway_target_stack_name  = trimsuffix(substr("${local.base_name}-orch-gw-target-stack", 0, 128), "-")
+  orchestrator_runtime_mcp_invoke_url     = "https://bedrock-agentcore.${var.aws_region}.amazonaws.com/runtimes/${urlencode(aws_cloudformation_stack.orchestrator_runtime.outputs["RuntimeArn"])}/invocations?qualifier=DEFAULT"
+
   tags = merge(var.common_tags, {
     Project     = var.project_name
     Environment = var.environment

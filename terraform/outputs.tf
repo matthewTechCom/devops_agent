@@ -165,3 +165,32 @@ output "gha_gateway_target_status" {
   description = "Gateway target status for the GitHub Actions MCP server."
   value       = aws_cloudformation_stack.gha_gateway_target.outputs["GatewayTargetStatus"]
 }
+
+# ------------------------------------------------------------------
+# Orchestrator MCP Server outputs
+# ------------------------------------------------------------------
+
+output "orchestrator_ecr_repository_url" {
+  description = "ECR repository URL for the Orchestrator MCP runtime image."
+  value       = aws_ecr_repository.orchestrator_runtime.repository_url
+}
+
+output "orchestrator_runtime_arn" {
+  description = "AgentCore Runtime ARN for the Orchestrator MCP server."
+  value       = aws_cloudformation_stack.orchestrator_runtime.outputs["RuntimeArn"]
+}
+
+output "orchestrator_runtime_status" {
+  description = "Current AgentCore Runtime status for the Orchestrator MCP server."
+  value       = aws_cloudformation_stack.orchestrator_runtime.outputs["RuntimeStatus"]
+}
+
+output "orchestrator_gateway_target_id" {
+  description = "Gateway target ID for the Orchestrator MCP server."
+  value       = aws_cloudformation_stack.orchestrator_gateway_target.outputs["GatewayTargetId"]
+}
+
+output "orchestrator_gateway_target_status" {
+  description = "Gateway target status for the Orchestrator MCP server."
+  value       = aws_cloudformation_stack.orchestrator_gateway_target.outputs["GatewayTargetStatus"]
+}

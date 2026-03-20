@@ -1,0 +1,43 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: AgentCore Runtime for Orchestrator MCP server
+
+Resources:
+  Runtime:
+    Type: AWS::BedrockAgentCore::Runtime
+    Properties:
+      AgentRuntimeName: "${runtime_name}"
+      Description: "${runtime_description}"
+      AgentRuntimeArtifact:
+        ContainerConfiguration:
+          ContainerUri: "${runtime_image_uri}"
+      NetworkConfiguration:
+        NetworkMode: PUBLIC
+      ProtocolConfiguration: MCP
+      AuthorizerConfiguration:
+        CustomJWTAuthorizer:
+          DiscoveryUrl: "${runtime_discovery_url}"
+          AllowedClients:
+            - "${runtime_allowed_client}"
+          AllowedScopes:
+            - "${runtime_allowed_scope}"
+      LifecycleConfiguration:
+        IdleRuntimeSessionTimeout: ${runtime_idle_timeout_seconds}
+        MaxLifetime: ${runtime_max_lifetime_seconds}
+      EnvironmentVariables:
+        AWS_REGION: "${aws_region}"
+        HOST: 0.0.0.0
+        PORT: "8000"
+        BEDROCK_MODEL_ID: "${bedrock_model_id}"
+        GATEWAY_MCP_URL: "${gateway_mcp_url}"
+        MAX_REACT_STEPS: "${max_react_steps}"
+        BEDROCK_MAX_TOKENS: "${bedrock_max_tokens}"
+        RUNTIME_CONFIG_SECRET_ID: "${runtime_config_secret_id}"
+      RoleArn: "${runtime_role_arn}"
+
+Outputs:
+  RuntimeArn:
+    Value: !GetAtt Runtime.AgentRuntimeArn
+  RuntimeId:
+    Value: !GetAtt Runtime.AgentRuntimeId
+  RuntimeStatus:
+    Value: !GetAtt Runtime.Status

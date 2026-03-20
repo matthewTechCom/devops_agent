@@ -1,0 +1,28 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: AgentCore Gateway Target for Orchestrator MCP server
+
+Resources:
+  GatewayTarget:
+    Type: AWS::BedrockAgentCore::GatewayTarget
+    Properties:
+      GatewayIdentifier: "${gateway_identifier}"
+      Name: "${target_name}"
+      Description: "AgentCore Runtime target for the Orchestrator MCP server"
+      CredentialProviderConfigurations:
+        - CredentialProviderType: OAUTH
+          CredentialProvider:
+            OauthCredentialProvider:
+              ProviderArn: "${oauth_provider_arn}"
+              GrantType: CLIENT_CREDENTIALS
+              Scopes:
+                - "${oauth_scope}"
+      TargetConfiguration:
+        Mcp:
+          McpServer:
+            Endpoint: "${runtime_mcp_invoke_url}"
+
+Outputs:
+  GatewayTargetId:
+    Value: !GetAtt GatewayTarget.TargetId
+  GatewayTargetStatus:
+    Value: !GetAtt GatewayTarget.Status
