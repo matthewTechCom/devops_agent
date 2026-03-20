@@ -1,0 +1,42 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: AgentCore Runtime for RDS Query MCP server
+
+Resources:
+  Runtime:
+    Type: AWS::BedrockAgentCore::Runtime
+    Properties:
+      AgentRuntimeName: "${runtime_name}"
+      Description: "${runtime_description}"
+      AgentRuntimeArtifact:
+        ContainerConfiguration:
+          ContainerUri: "${runtime_image_uri}"
+      NetworkConfiguration:
+        NetworkMode: PUBLIC
+      ProtocolConfiguration: MCP
+      AuthorizerConfiguration:
+        CustomJWTAuthorizer:
+          DiscoveryUrl: "${runtime_discovery_url}"
+          AllowedClients:
+            - "${runtime_allowed_client}"
+          AllowedScopes:
+            - "${runtime_allowed_scope}"
+      LifecycleConfiguration:
+        IdleRuntimeSessionTimeout: ${runtime_idle_timeout_seconds}
+        MaxLifetime: ${runtime_max_lifetime_seconds}
+      EnvironmentVariables:
+        AWS_REGION: "${aws_region}"
+        HOST: 0.0.0.0
+        PORT: "8000"
+        RDS_LAMBDA_FUNCTION_NAME: "${rds_lambda_function_name}"
+        LAMBDA_TIMEOUT_SECONDS: "${lambda_timeout_seconds}"
+        QUERY_MAX_ROWS: "${query_max_rows}"
+        RUNTIME_CONFIG_SECRET_ID: "${runtime_config_secret_id}"
+      RoleArn: "${runtime_role_arn}"
+
+Outputs:
+  RuntimeArn:
+    Value: !GetAtt Runtime.AgentRuntimeArn
+  RuntimeId:
+    Value: !GetAtt Runtime.AgentRuntimeId
+  RuntimeStatus:
+    Value: !GetAtt Runtime.Status
