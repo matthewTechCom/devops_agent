@@ -43,7 +43,7 @@ locals {
   oauth_provider_name   = trimsuffix(substr(replace("${local.base_name}-cognito", "/[^0-9A-Za-z_-]/", "-"), 0, 128), "-")
 
   runtime_repository_name    = trimsuffix(substr("${local.base_name}-runtime", 0, 256), "-")
-  runtime_image_uri          = "${aws_ecr_repository.runtime.repository_url}:${var.runtime_image_tag}"
+  runtime_image_uri          = "${aws_ecr_repository.runtime.repository_url}@${data.external.runtime_image.result["image_digest"]}"
   runtime_config_secret_name = trimsuffix(substr("${local.base_name}-runtime-config", 0, 512), "-")
   runtime_config_secret_payload = {
     TARGET_APP_NAME         = var.target_app_name != null ? var.target_app_name : ""

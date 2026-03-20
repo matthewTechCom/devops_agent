@@ -27,3 +27,17 @@ resource "aws_ecr_lifecycle_policy" "runtime" {
     ]
   })
 }
+
+data "external" "runtime_image" {
+  program = [
+    var.python_executable,
+    "${path.module}/scripts/get_ecr_image_digest.py",
+    "get",
+    "--region",
+    var.aws_region,
+    "--repository-name",
+    aws_ecr_repository.runtime.name,
+    "--image-tag",
+    var.runtime_image_tag,
+  ]
+}
