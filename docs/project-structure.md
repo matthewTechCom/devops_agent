@@ -7,6 +7,7 @@
 ```mermaid
 flowchart LR
   Client["MCP Client\n(Codex / Copilot / VS Code)"]
+  Proxy["MCP Proxy for AWS"]
   Gateway["AgentCore Gateway"]
   Runtime["AgentCore Runtime\nmcp_server.py"]
   CloudWatch["CloudWatch Logs Insights"]
@@ -15,7 +16,8 @@ flowchart LR
   ECR["Amazon ECR"]
   Secrets["AWS Secrets Manager\nruntime config"]
 
-  Client -->|MCP over HTTP| Gateway
+  Client -->|stdio| Proxy
+  Proxy -->|MCP over HTTP + SigV4| Gateway
   Gateway -->|MCP Target| Runtime
   Runtime -->|StartQuery / GetQueryResults| CloudWatch
   Runtime -. 起動時に設定取得 .-> Secrets
@@ -78,7 +80,7 @@ flowchart LR
 - `.dockerignore`
   - `.env` や Terraform state などを Docker build context から除外します。
 - `mcp.json`
-  - AgentCore Gateway URL を指す MCP クライアント設定のサンプルです。
+  - MCP Proxy for AWS 経由で AgentCore Gateway に SigV4 接続するための MCP クライアント設定サンプルです。
 
 ### 2. インフラ定義層
 
@@ -87,11 +89,11 @@ flowchart LR
 - `terraform/gateway.tf`
   - AgentCore Gateway と Gateway Target 用 CloudFormation Stack を作成します。
 - `terraform/cognito.tf`
-  - Runtime の JWT 検証と Gateway の client credentials に使う Cognito を作成します。
+  - Runtime の JWT 検証と Gateway から Runtime への outbound `client_credentials` に使う Cognito を作成します。
 - `terraform/agentcore_identity.tf`
   - AgentCore Identity の OAuth Credential Provider を `local-exec` と `external` で補完します。
 - `terraform/iam.tf`
-  - Runtime / Gateway の IAM Role と Policy を定義します。
+  - Runtime / Gateway の IAM Role と Policy、および Gateway caller 用の invoke policy を定義します。
 - `terraform/ecr.tf`
   - Runtime イメージを保持する ECR repository を作成します。
 - `terraform/locals.tf`
@@ -193,6 +195,7 @@ flowchart TB
 
 - 実行ロジックは `mcp_server.py` に集約され、責務が明確です。
 - AWS 上の実体作成は Terraform が担いますが、AgentCore Runtime / Gateway 自体は CloudFormation テンプレート経由で作成されます。
+- クライアントから Gateway への接続は `AWS_IAM` + SigV4 を前提にしています。
 - Gateway から Runtime への接続は Cognito + AgentCore Identity OAuth Provider を介した `client_credentials` フローです。
 - CloudWatch Logs Insights の実行権限は Runtime IAM Role のみにあり、Gateway 自身は CloudWatch を直接触りません。
 - `.env` はローカル実行用で、Docker build context にも Runtime 環境変数にもそのまま載りません。

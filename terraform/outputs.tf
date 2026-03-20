@@ -53,6 +53,16 @@ output "gateway_role_arn" {
   value       = aws_iam_role.gateway.arn
 }
 
+output "gateway_arn" {
+  description = "Gateway ARN."
+  value       = aws_cloudformation_stack.gateway.outputs["GatewayArn"]
+}
+
+output "gateway_authorizer_type" {
+  description = "Inbound authentication mode configured on the Gateway."
+  value       = var.gateway_authorizer_type
+}
+
 output "gateway_identifier" {
   description = "Gateway identifier."
   value       = aws_cloudformation_stack.gateway.outputs["GatewayIdentifier"]
@@ -76,6 +86,16 @@ output "gateway_target_id" {
 output "gateway_target_status" {
   description = "Gateway target status after synchronization."
   value       = aws_cloudformation_stack.gateway.outputs["GatewayTargetStatus"]
+}
+
+output "gateway_invoke_policy_arn" {
+  description = "Managed IAM policy ARN that grants bedrock-agentcore:InvokeGateway on this Gateway."
+  value       = aws_iam_policy.gateway_invoke.arn
+}
+
+output "gateway_invoke_policy_document" {
+  description = "IAM policy document to attach to callers such as MCP Proxy for AWS."
+  value       = data.aws_iam_policy_document.gateway_invoke.json
 }
 
 output "cognito_user_pool_id" {

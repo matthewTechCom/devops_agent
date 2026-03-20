@@ -1,8 +1,18 @@
 {
   "servers": {
     "agentcoreCloudWatch": {
-      "type": "http",
-      "url": "https://REPLACE_WITH_GATEWAY_URL"
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "mcp-proxy-for-aws@latest",
+        "https://REPLACE_WITH_GATEWAY_URL",
+        "--service",
+        "bedrock-agentcore",
+        "--region",
+        "REPLACE_WITH_AWS_REGION",
+        "--profile",
+        "REPLACE_WITH_AWS_PROFILE"
+      ]
     }
   }
 }

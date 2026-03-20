@@ -15,7 +15,7 @@ graph LR
     RT_CW["AgentCore Runtime<br/>CloudWatch MCP Server"]
     CW["CloudWatch Logs<br/>Insights"]
 
-    Client -->|MCP over HTTP| GW
+    Client -->|SigV4 via MCP Proxy for AWS| GW
     GW -->|OAuth2 + MCP| RT_CW
     RT_CW -->|boto3 IAM| CW
 ```
@@ -32,7 +32,7 @@ graph LR
     RDS["RDS PostgreSQL<br/>(todo_sample)"]
     SM["Secrets Manager<br/>(DATABASE_URL)"]
 
-    Client -->|MCP over HTTP| GW
+    Client -->|SigV4 via MCP Proxy for AWS| GW
     GW -->|Target: cwlogs| RT_CW
     GW -->|Target: rdsquery| RT_RDS
     RT_CW -->|boto3| CW
@@ -78,7 +78,7 @@ graph TB
         RDS["RDS PostgreSQL<br/>VPC Private Subnet"]
     end
 
-    IDE -->|Streamable HTTP| GW
+    IDE -->|Streamable HTTP + SigV4| GW
     GW -->|OAuth2 client_credentials| Cognito
     Cognito --> OAuth
     GW -->|cwlogs___query_cloudwatch_insights| RT1

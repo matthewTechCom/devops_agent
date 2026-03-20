@@ -1,6 +1,6 @@
 # CloudWatch Logs Insights DevOps Agent on AgentCore
 
-AWS Bedrock AgentCore Runtime 上で Python 製 MCP サーバーを動かし、AgentCore Gateway 経由で `query_cloudwatch_insights` を公開する構成です。
+AWS Bedrock AgentCore Runtime 上で Python 製 MCP サーバーを動かし、AgentCore Gateway 経由で `query_cloudwatch_insights` を公開する構成です。Gateway のクライアント向け認証は `AWS_IAM` を使い、MCP Proxy for AWS から SigV4 で接続する前提です。
 
 関連ドキュメント:
 
@@ -46,7 +46,11 @@ AWS Bedrock AgentCore Runtime 上で Python 製 MCP サーバーを動かし、A
 ```text
 Codex / Copilot / VS Code
         |
-        | MCP over Streamable HTTP
+        | stdio
+        v
+MCP Proxy for AWS
+        |
+        | MCP over Streamable HTTP + SigV4
         v
 AgentCore Gateway
         |
@@ -114,6 +118,12 @@ CloudWatch Logs Insights
 - `TF_VAR_default_log_group_name`
   - Terraform 側で使う既定 log group 名です。
   - IAM Policy と runtime config に反映されます。
+- `TF_VAR_gateway_authorizer_type`
+  - AgentCore Gateway の inbound auth 種別です。
+  - MCP Proxy for AWS を使う場合は `AWS_IAM` を指定します。
+- `TF_VAR_gateway_invoke_role_names`
+  - Terraform が `bedrock-agentcore:InvokeGateway` ポリシーを自動アタッチする既存 IAM Role 名の一覧です。
+  - 例: `["my-devbox-role"]`
 - `TF_VAR_runtime_image_tag`
   - AgentCore Runtime にデプロイするコンテナ image tag です。
   - `docker buildx build` の tag と一致させる必要があります。
@@ -229,18 +239,37 @@ AWS_PROFILE="${AWS_PROFILE:-your-aws-profile}" terraform apply
 - AgentCore Runtime
 - AgentCore Gateway
 - AgentCore GatewayTarget
+- Gateway invoke 用 managed IAM policy
 
 ### 5. 出力確認
 
 ```bash
 AWS_PROFILE="${AWS_PROFILE:-your-aws-profile}" terraform output -raw gateway_url
+AWS_PROFILE="${AWS_PROFILE:-your-aws-profile}" terraform output -raw gateway_authorizer_type
+AWS_PROFILE="${AWS_PROFILE:-your-aws-profile}" terraform output -raw gateway_invoke_policy_arn
 AWS_PROFILE="${AWS_PROFILE:-your-aws-profile}" terraform output gateway_target_status
-AWS_PROFILE="${AWS_PROFILE:-your-aws-profile}" terraform output cognito_user_pool_id
-AWS_PROFILE="${AWS_PROFILE:-your-aws-profile}" terraform output cognito_runtime_scope
 AWS_PROFILE="${AWS_PROFILE:-your-aws-profile}" terraform output runtime_config_secret_arn
 ```
 
 `gateway_target_status` が `READY` なら Gateway から Runtime の `tools/list` 同期まで成功しています。
+
+`gateway_authorizer_type` が `AWS_IAM` なら、クライアントは SigV4 署名付きで Gateway を呼ぶ必要があります。`gateway_invoke_policy_arn` はその caller role に付与するための managed policy です。
+
+## MCP Proxy for AWS から接続する
+
+`mcp.json` のサンプルは `uvx mcp-proxy-for-aws@latest` を使う前提に更新しています。必要な AWS 権限は `bedrock-agentcore:InvokeGateway` です。
+
+Terraform で caller role へ自動付与しない場合は、次で policy JSON を取得できます。
+
+```bash
+AWS_PROFILE="${AWS_PROFILE:-your-aws-profile}" terraform output -raw gateway_invoke_policy_document
+```
+
+接続元の AWS 認証情報は、次のいずれかを使います。
+
+- `AWS_PROFILE`
+- `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` / `AWS_SESSION_TOKEN`
+- EC2 / ECS / Lambda などの IAM role
 
 ## ツール仕様
 
@@ -396,6 +425,13 @@ cd terraform
 AWS_PROFILE=your-aws-profile terraform output -raw gateway_url
 ```
 
+Gateway invoke policy:
+
+```bash
+cd terraform
+AWS_PROFILE=your-aws-profile terraform output -raw gateway_invoke_policy_arn
+```
+
 Runtime target URL:
 
 ```bash
@@ -408,11 +444,4 @@ AWS_PROFILE=your-aws-profile terraform output -raw runtime_mcp_invoke_url
 ```bash
 cd terraform
 AWS_PROFILE=your-aws-profile terraform output allowed_log_group_names
-```
-
-Cognito scope:
-
-```bash
-cd terraform
-AWS_PROFILE=your-aws-profile terraform output cognito_runtime_scope
 ```
