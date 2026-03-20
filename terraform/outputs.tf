@@ -53,29 +53,49 @@ output "gateway_role_arn" {
   value       = aws_iam_role.gateway.arn
 }
 
+output "gateway_arn" {
+  description = "Gateway ARN."
+  value       = try(aws_cloudformation_stack.gateway.outputs["GatewayArn"], null)
+}
+
+output "gateway_authorizer_type" {
+  description = "Inbound authentication mode configured on the Gateway."
+  value       = var.gateway_authorizer_type
+}
+
 output "gateway_identifier" {
   description = "Gateway identifier."
-  value       = aws_cloudformation_stack.gateway.outputs["GatewayIdentifier"]
+  value       = try(aws_cloudformation_stack.gateway.outputs["GatewayIdentifier"], null)
 }
 
 output "gateway_url" {
   description = "Public AgentCore Gateway MCP endpoint URL."
-  value       = aws_cloudformation_stack.gateway.outputs["GatewayUrl"]
+  value       = try(aws_cloudformation_stack.gateway.outputs["GatewayUrl"], null)
 }
 
 output "gateway_status" {
   description = "Current AgentCore Gateway status."
-  value       = aws_cloudformation_stack.gateway.outputs["GatewayStatus"]
+  value       = try(aws_cloudformation_stack.gateway.outputs["GatewayStatus"], null)
 }
 
 output "gateway_target_id" {
   description = "Gateway target ID."
-  value       = aws_cloudformation_stack.gateway.outputs["GatewayTargetId"]
+  value       = try(aws_cloudformation_stack.gateway.outputs["GatewayTargetId"], null)
 }
 
 output "gateway_target_status" {
   description = "Gateway target status after synchronization."
-  value       = aws_cloudformation_stack.gateway.outputs["GatewayTargetStatus"]
+  value       = try(aws_cloudformation_stack.gateway.outputs["GatewayTargetStatus"], null)
+}
+
+output "gateway_invoke_policy_arn" {
+  description = "Managed IAM policy ARN that grants bedrock-agentcore:InvokeGateway on this Gateway."
+  value       = try(aws_iam_policy.gateway_invoke.arn, null)
+}
+
+output "gateway_invoke_policy_document" {
+  description = "IAM policy document to attach to callers such as MCP Proxy for AWS."
+  value       = try(data.aws_iam_policy_document.gateway_invoke.json, null)
 }
 
 output "cognito_user_pool_id" {
@@ -109,22 +129,22 @@ output "rds_ecr_repository_url" {
 
 output "rds_runtime_arn" {
   description = "AgentCore Runtime ARN for the RDS MCP server."
-  value       = aws_cloudformation_stack.rds_runtime.outputs["RuntimeArn"]
+  value       = try(aws_cloudformation_stack.rds_runtime.outputs["RuntimeArn"], null)
 }
 
 output "rds_runtime_status" {
   description = "Current AgentCore Runtime status for the RDS MCP server."
-  value       = aws_cloudformation_stack.rds_runtime.outputs["RuntimeStatus"]
+  value       = try(aws_cloudformation_stack.rds_runtime.outputs["RuntimeStatus"], null)
 }
 
 output "rds_gateway_target_id" {
   description = "Gateway target ID for the RDS MCP server."
-  value       = aws_cloudformation_stack.rds_gateway_target.outputs["GatewayTargetId"]
+  value       = try(aws_cloudformation_stack.rds_gateway_target.outputs["GatewayTargetId"], null)
 }
 
 output "rds_gateway_target_status" {
   description = "Gateway target status for the RDS MCP server."
-  value       = aws_cloudformation_stack.rds_gateway_target.outputs["GatewayTargetStatus"]
+  value       = try(aws_cloudformation_stack.rds_gateway_target.outputs["GatewayTargetStatus"], null)
 }
 
 output "rds_lambda_function_name" {
@@ -148,22 +168,22 @@ output "gha_ecr_repository_url" {
 
 output "gha_runtime_arn" {
   description = "AgentCore Runtime ARN for the GitHub Actions MCP server."
-  value       = aws_cloudformation_stack.gha_runtime.outputs["RuntimeArn"]
+  value       = try(aws_cloudformation_stack.gha_runtime.outputs["RuntimeArn"], null)
 }
 
 output "gha_runtime_status" {
   description = "Current AgentCore Runtime status for the GitHub Actions MCP server."
-  value       = aws_cloudformation_stack.gha_runtime.outputs["RuntimeStatus"]
+  value       = try(aws_cloudformation_stack.gha_runtime.outputs["RuntimeStatus"], null)
 }
 
 output "gha_gateway_target_id" {
   description = "Gateway target ID for the GitHub Actions MCP server."
-  value       = aws_cloudformation_stack.gha_gateway_target.outputs["GatewayTargetId"]
+  value       = try(aws_cloudformation_stack.gha_gateway_target.outputs["GatewayTargetId"], null)
 }
 
 output "gha_gateway_target_status" {
   description = "Gateway target status for the GitHub Actions MCP server."
-  value       = aws_cloudformation_stack.gha_gateway_target.outputs["GatewayTargetStatus"]
+  value       = try(aws_cloudformation_stack.gha_gateway_target.outputs["GatewayTargetStatus"], null)
 }
 
 # ------------------------------------------------------------------
@@ -177,20 +197,20 @@ output "orchestrator_ecr_repository_url" {
 
 output "orchestrator_runtime_arn" {
   description = "AgentCore Runtime ARN for the Orchestrator MCP server."
-  value       = aws_cloudformation_stack.orchestrator_runtime.outputs["RuntimeArn"]
+  value       = try(aws_cloudformation_stack.orchestrator_runtime.outputs["RuntimeArn"], null)
 }
 
 output "orchestrator_runtime_status" {
   description = "Current AgentCore Runtime status for the Orchestrator MCP server."
-  value       = aws_cloudformation_stack.orchestrator_runtime.outputs["RuntimeStatus"]
+  value       = try(aws_cloudformation_stack.orchestrator_runtime.outputs["RuntimeStatus"], null)
 }
 
 output "orchestrator_gateway_target_id" {
   description = "Gateway target ID for the Orchestrator MCP server."
-  value       = aws_cloudformation_stack.orchestrator_gateway_target.outputs["GatewayTargetId"]
+  value       = try(aws_cloudformation_stack.orchestrator_gateway_target.outputs["GatewayTargetId"], null)
 }
 
 output "orchestrator_gateway_target_status" {
   description = "Gateway target status for the Orchestrator MCP server."
-  value       = aws_cloudformation_stack.orchestrator_gateway_target.outputs["GatewayTargetStatus"]
+  value       = try(aws_cloudformation_stack.orchestrator_gateway_target.outputs["GatewayTargetStatus"], null)
 }

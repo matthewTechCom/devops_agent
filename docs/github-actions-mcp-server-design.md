@@ -17,7 +17,7 @@ graph LR
     CW["CloudWatch Logs"]
     RDS["RDS PostgreSQL"]
 
-    Client -->|MCP over HTTP| GW
+    Client -->|SigV4 via MCP Proxy for AWS| GW
     GW --> RT_CW
     GW --> RT_RDS
     RT_CW --> CW
@@ -37,7 +37,7 @@ graph LR
     RDS["RDS PostgreSQL"]
     GH["GitHub API"]
 
-    Client -->|MCP over HTTP| GW
+    Client -->|SigV4 via MCP Proxy for AWS| GW
     GW --> RT_CW
     GW --> RT_RDS
     GW --> RT_GHA
@@ -108,7 +108,7 @@ graph TB
         GHAPI["GitHub REST API<br/>api.github.com"]
     end
 
-    IDE -->|Streamable HTTP| GW
+    IDE -->|Streamable HTTP + SigV4| GW
     GW -->|cwlogs___*| RT1
     GW -->|rdsquery___*| RT2
     GW -->|ghactions___*| RT3

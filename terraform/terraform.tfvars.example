@@ -6,6 +6,9 @@ python_executable = "../.venv/bin/python"
 
 runtime_image_tag = "latest"
 
+gateway_authorizer_type = "AWS_IAM"
+# gateway_invoke_role_names = ["your-existing-client-role"]
+
 target_app_name        = "todo-sample"
 target_app_environment = "prod"
 target_app_component   = "backend"
