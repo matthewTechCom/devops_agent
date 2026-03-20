@@ -17,7 +17,7 @@ load_dotenv()
 
 
 def bootstrap_aws_region() -> str:
-    return os.getenv("AWS_REGION", "ap-northeast-1")
+    return os.getenv("AWS_REGION", "us-east-1")
 
 
 def parse_remote_runtime_config(raw_payload: str, *, source: str) -> dict[str, Any]:

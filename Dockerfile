@@ -4,7 +4,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     HOST=0.0.0.0 \
     PORT=8000 \
-    AWS_REGION=ap-northeast-1
+    AWS_REGION=us-east-1
 
 WORKDIR /app
 

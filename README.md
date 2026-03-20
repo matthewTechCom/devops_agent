@@ -74,7 +74,7 @@ CloudWatch Logs Insights
 - `AWS_REGION`
   - AWS のデプロイ先リージョンです。
   - ローカル MCP サーバーの `boto3` でも使います。
-  - 例: `ap-northeast-1`
+  - 例: `us-east-1`
 - `TARGET_APP_NAME`
   - 監視対象アプリの名前です。
   - `DEFAULT_LOG_GROUP_NAME` を省略したときの log group 名導出に使います。
@@ -117,6 +117,8 @@ CloudWatch Logs Insights
 - `TF_VAR_runtime_image_tag`
   - AgentCore Runtime にデプロイするコンテナ image tag です。
   - `docker buildx build` の tag と一致させる必要があります。
+  - `TF_VAR_runtime_image_tag` を export している場合は、Terraform の default よりそちらが優先されます。
+  - Terraform はこの tag から ECR の digest を解決し、Runtime には `repo@sha256:...` を渡します。
 
 ```bash
 cp .env.example .env
@@ -189,18 +191,23 @@ AWS_PROFILE="${AWS_PROFILE:-your-aws-profile}" terraform apply \
 ```bash
 AWS_ACCOUNT_ID=$(AWS_PROFILE="${AWS_PROFILE:-your-aws-profile}" aws sts get-caller-identity --query Account --output text)
 ECR_REPOSITORY_URL=$(AWS_PROFILE="${AWS_PROFILE:-your-aws-profile}" terraform output -raw ecr_repository_url)
+IMAGE_TAG="${TF_VAR_runtime_image_tag:-latest}"
 
-AWS_PROFILE="${AWS_PROFILE:-your-aws-profile}" aws ecr get-login-password --region "${AWS_REGION:-ap-northeast-1}" \
-  | docker login --username AWS --password-stdin "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION:-ap-northeast-1}.amazonaws.com"
+AWS_PROFILE="${AWS_PROFILE:-your-aws-profile}" aws ecr get-login-password --region "${AWS_REGION:-us-east-1}" \
+  | docker login --username AWS --password-stdin "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION:-us-east-1}.amazonaws.com"
 
 docker buildx build \
   --platform linux/arm64 \
-  -t "${ECR_REPOSITORY_URL}:latest" \
+  --provenance=false \
+  --sbom=false \
+  -t "${ECR_REPOSITORY_URL}:${IMAGE_TAG}" \
   --push \
   ..
 ```
 
 AgentCore Runtime は `arm64` image を要求します。
+Terraform apply 時には、push 済み tag の digest を ECR から引いて Runtime に渡します。
+`TF_VAR_runtime_image_tag` を export している場合は、ここで使う `IMAGE_TAG` も同じ値になります。
 
 ### 4. Cognito + Runtime + Gateway を apply
 
@@ -249,7 +256,7 @@ AWS_PROFILE="${AWS_PROFILE:-your-aws-profile}" terraform output runtime_config_s
 ```json
 {
   "ok": true,
-  "region": "ap-northeast-1",
+  "region": "us-east-1",
   "log_group_name": "/ecs/todo-sample-prod-backend",
   "minutes": 30,
   "query": "fields @timestamp, @message | sort @timestamp desc | limit 20",
