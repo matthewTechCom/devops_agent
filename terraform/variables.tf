@@ -105,3 +105,55 @@ variable "validate_target_app_configuration" {
   type        = bool
   default     = true
 }
+
+# ------------------------------------------------------------------
+# RDS MCP Server variables
+# ------------------------------------------------------------------
+
+variable "rds_runtime_image_tag" {
+  description = "Container image tag for the RDS MCP Server runtime."
+  type        = string
+  default     = "latest"
+}
+
+variable "rds_vpc_id" {
+  description = "VPC ID of the todo_sample application where the RDS instance lives."
+  type        = string
+  default     = null
+}
+
+variable "rds_lambda_subnet_ids" {
+  description = "Subnet IDs (private app subnets in todo_sample VPC) for the RDS Lambda proxy."
+  type        = list(string)
+  default     = []
+}
+
+variable "rds_database_url_secret_arn" {
+  description = "Secrets Manager ARN containing the PostgreSQL connection string (DATABASE_URL)."
+  type        = string
+  default     = ""
+}
+
+variable "rds_db_security_group_id" {
+  description = "Security group ID of the RDS instance to allow Lambda ingress."
+  type        = string
+  default     = ""
+}
+
+variable "rds_vpce_security_group_id" {
+  description = "Security group ID of the VPC endpoints in the todo_sample VPC to allow Lambda access to Secrets Manager."
+  type        = string
+  default     = ""
+}
+
+variable "rds_statement_timeout_ms" {
+  description = "SQL statement timeout in milliseconds for the Lambda proxy."
+  type        = number
+  default     = 30000
+}
+
+variable "rds_max_rows" {
+  description = "Maximum number of rows the Lambda proxy will return per query."
+  type        = number
+  default     = 1000
+}

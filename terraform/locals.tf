@@ -70,6 +70,30 @@ locals {
   gateway_stack_description      = "AgentCore Gateway and MCP target for the CloudWatch Logs Insights runtime."
   gateway_instructions           = "Use query_cloudwatch_insights to run CloudWatch Logs Insights against approved log groups. Provide log_group_name, minutes, and query."
 
+  # ------------------------------------------------------------------
+  # RDS MCP Server locals
+  # ------------------------------------------------------------------
+  rds_target_name           = "rdsquery"
+  rds_runtime_name = trimsuffix(
+    substr(
+      "RdsQuery_${replace(lower("${var.project_name}_${var.environment}_${random_string.suffix.result}"), "/[^0-9a-z_]/", "_")}",
+      0,
+      48,
+    ),
+    "_",
+  )
+  rds_runtime_repository_name    = trimsuffix(substr("${local.base_name}-rds-runtime", 0, 256), "-")
+  rds_runtime_image_uri          = "${aws_ecr_repository.rds_runtime.repository_url}:${var.rds_runtime_image_tag}"
+  rds_runtime_config_secret_name = trimsuffix(substr("${local.base_name}-rds-runtime-config", 0, 512), "-")
+  rds_runtime_config_secret_payload = {
+    RDS_LAMBDA_FUNCTION_NAME = aws_lambda_function.rds_query_proxy.function_name
+    QUERY_MAX_ROWS           = tostring(var.rds_max_rows)
+  }
+  rds_runtime_stack_name        = trimsuffix(substr("${local.base_name}-rds-runtime-stack", 0, 128), "-")
+  rds_runtime_stack_description = "AgentCore Runtime for RDS Query MCP server."
+  rds_gateway_target_stack_name = trimsuffix(substr("${local.base_name}-rds-gw-target-stack", 0, 128), "-")
+  rds_runtime_mcp_invoke_url    = "https://bedrock-agentcore.${var.aws_region}.amazonaws.com/runtimes/${urlencode(aws_cloudformation_stack.rds_runtime.outputs["RuntimeArn"])}/invocations?qualifier=DEFAULT"
+
   tags = merge(var.common_tags, {
     Project     = var.project_name
     Environment = var.environment

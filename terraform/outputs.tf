@@ -97,3 +97,42 @@ output "cognito_runtime_scope" {
   description = "OAuth scope used by AgentCore Gateway to invoke the Runtime."
   value       = local.cognito_scope_value
 }
+
+# ------------------------------------------------------------------
+# RDS MCP Server outputs
+# ------------------------------------------------------------------
+
+output "rds_ecr_repository_url" {
+  description = "ECR repository URL for the RDS MCP runtime image."
+  value       = aws_ecr_repository.rds_runtime.repository_url
+}
+
+output "rds_runtime_arn" {
+  description = "AgentCore Runtime ARN for the RDS MCP server."
+  value       = aws_cloudformation_stack.rds_runtime.outputs["RuntimeArn"]
+}
+
+output "rds_runtime_status" {
+  description = "Current AgentCore Runtime status for the RDS MCP server."
+  value       = aws_cloudformation_stack.rds_runtime.outputs["RuntimeStatus"]
+}
+
+output "rds_gateway_target_id" {
+  description = "Gateway target ID for the RDS MCP server."
+  value       = aws_cloudformation_stack.rds_gateway_target.outputs["GatewayTargetId"]
+}
+
+output "rds_gateway_target_status" {
+  description = "Gateway target status for the RDS MCP server."
+  value       = aws_cloudformation_stack.rds_gateway_target.outputs["GatewayTargetStatus"]
+}
+
+output "rds_lambda_function_name" {
+  description = "Lambda function name for the RDS query proxy."
+  value       = aws_lambda_function.rds_query_proxy.function_name
+}
+
+output "rds_lambda_security_group_id" {
+  description = "Security group ID of the RDS Lambda proxy (add ingress to RDS SG)."
+  value       = aws_security_group.rds_lambda.id
+}
