@@ -64,17 +64,6 @@ variable "runtime_max_lifetime_seconds" {
   default     = 14400
 }
 
-variable "gateway_authorizer_type" {
-  description = "Inbound authentication mode for AgentCore Gateway. Use AWS_IAM for SigV4 clients such as MCP Proxy for AWS."
-  type        = string
-  default     = "AWS_IAM"
-
-  validation {
-    condition     = contains(["AWS_IAM", "CUSTOM_JWT", "NONE"], var.gateway_authorizer_type)
-    error_message = "gateway_authorizer_type must be one of AWS_IAM, CUSTOM_JWT, or NONE."
-  }
-}
-
 variable "query_timeout_seconds" {
   description = "Timeout used by the MCP server while polling GetQueryResults."
   type        = number
@@ -115,12 +104,6 @@ variable "validate_target_app_configuration" {
   description = "Guardrail toggle for target app configuration validation."
   type        = bool
   default     = true
-}
-
-variable "gateway_invoke_role_names" {
-  description = "Existing IAM role names that should receive the AgentCore Gateway invoke policy."
-  type        = list(string)
-  default     = []
 }
 
 # ------------------------------------------------------------------

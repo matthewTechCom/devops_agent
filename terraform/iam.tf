@@ -181,29 +181,3 @@ resource "aws_iam_role_policy" "gateway" {
   role   = aws_iam_role.gateway.id
   policy = data.aws_iam_policy_document.gateway.json
 }
-
-data "aws_iam_policy_document" "gateway_invoke" {
-  statement {
-    sid    = "InvokeGateway"
-    effect = "Allow"
-    actions = [
-      "bedrock-agentcore:InvokeGateway",
-    ]
-    resources = compact([
-      try(aws_cloudformation_stack.gateway.outputs["GatewayArn"], null),
-    ])
-  }
-}
-
-resource "aws_iam_policy" "gateway_invoke" {
-  name        = trimsuffix(substr("${local.base_name}-agentcore-gateway-invoke", 0, 128), "-")
-  description = "Allows clients such as MCP Proxy for AWS to invoke the AgentCore Gateway."
-  policy      = data.aws_iam_policy_document.gateway_invoke.json
-}
-
-resource "aws_iam_role_policy_attachment" "gateway_invoke" {
-  for_each = toset(var.gateway_invoke_role_names)
-
-  role       = each.value
-  policy_arn = aws_iam_policy.gateway_invoke.arn
-}
