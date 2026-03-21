@@ -3,9 +3,12 @@ import os
 import time
 from datetime import datetime, timezone
 from typing import Any
+from urllib.parse import urlparse
 
 import boto3
 import httpx
+from botocore.auth import SigV4Auth
+from botocore.awsrequest import AWSRequest
 from botocore.exceptions import BotoCoreError, ClientError
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
@@ -367,8 +370,23 @@ BEDROCK_TOOL_DEFINITIONS = [
 # MCP Gateway client – call sub-tools via the AgentCore Gateway
 # ---------------------------------------------------------------------------
 
+def _sigv4_headers(url: str, body: bytes) -> dict[str, str]:
+    """Generate SigV4 signed headers for a POST request to AgentCore Gateway."""
+    session = boto3.Session(region_name=AWS_REGION)
+    credentials = session.get_credentials().get_frozen_credentials()
+    parsed = urlparse(url)
+    request = AWSRequest(
+        method="POST",
+        url=url,
+        data=body,
+        headers={"Content-Type": "application/json", "Host": parsed.hostname},
+    )
+    SigV4Auth(credentials, "bedrock-agentcore", AWS_REGION).add_auth(request)
+    return dict(request.headers)
+
+
 def call_mcp_tool_via_gateway(tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
-    """Call an MCP tool on the AgentCore Gateway using JSON-RPC over HTTP."""
+    """Call an MCP tool on the AgentCore Gateway using JSON-RPC over HTTP with SigV4 auth."""
     if not GATEWAY_MCP_URL:
         return {"ok": False, "error": "GATEWAY_MCP_URL is not configured."}
 
@@ -382,15 +400,17 @@ def call_mcp_tool_via_gateway(tool_name: str, arguments: dict[str, Any]) -> dict
         },
     }
 
+    body = json.dumps(payload).encode("utf-8")
+
     try:
+        signed_headers = _sigv4_headers(GATEWAY_MCP_URL, body)
+        signed_headers["Accept"] = "application/json, text/event-stream"
+
         with httpx.Client(timeout=90.0) as client:
             response = client.post(
                 GATEWAY_MCP_URL,
-                json=payload,
-                headers={
-                    "Content-Type": "application/json",
-                    "Accept": "application/json, text/event-stream",
-                },
+                content=body,
+                headers=signed_headers,
             )
             response.raise_for_status()
 

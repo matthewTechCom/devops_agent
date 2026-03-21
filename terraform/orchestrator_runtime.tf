@@ -122,6 +122,18 @@ data "aws_iam_policy_document" "orchestrator_runtime" {
     ]
     resources = [aws_secretsmanager_secret.orchestrator_runtime_config.arn]
   }
+
+  # Invoke Gateway (SigV4 auth) to call sub-tools
+  statement {
+    sid    = "InvokeGateway"
+    effect = "Allow"
+    actions = [
+      "bedrock-agentcore:InvokeGateway",
+    ]
+    resources = [
+      try(aws_cloudformation_stack.gateway.outputs["GatewayArn"], "*"),
+    ]
+  }
 }
 
 resource "aws_iam_role_policy" "orchestrator_runtime" {
