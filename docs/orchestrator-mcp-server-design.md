@@ -19,7 +19,7 @@ graph LR
     RDS["RDS PostgreSQL"]
     GH["GitHub API"]
 
-    Client -->|SigV4 via MCP Proxy for AWS| GW
+    Client -->|MCP over HTTP| GW
     GW --> RT_CW
     GW --> RT_RDS
     GW --> RT_GHA
@@ -143,7 +143,7 @@ graph TB
         GH["GitHub REST API"]
     end
 
-    IDE -->|Streamable HTTP + SigV4| GW
+    IDE -->|Streamable HTTP| GW
     GW -->|cwlogs___*| RT1
     GW -->|rdsquery___*| RT2
     GW -->|ghactions___*| RT3
